@@ -10,43 +10,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Static files
-app.use('/public', express.static(path.join(__dirname, 'public')));
-app.use((req, res, next) => {
-    res.removeHeader('X-Powered-By');
-    
-    // Security headers
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'DENY');
-    res.setHeader('X-XSS-Protection', '1; mode=block');
-    res.setHeader('Referrer-Policy', 'no-referrer');
-    
-    // Permissions for camera, mic, geolocation
-    res.setHeader('Permissions-Policy', 'camera=*, microphone=*, geolocation=*');
-    
-    // Content Security Policy (flexible for your needs)
-    res.setHeader('Content-Security-Policy', 
-        "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; " +
-        "connect-src 'self' https: wss:; " +
-        "media-src 'self' https: data: blob:;"
-    );
-    
-    next();
-});
+// ✅ Serve static files
+app.use(express.static(__dirname));
 
-// Main page - clean URL
+// Routes
 app.get('/', (req, res) => {
-    // Log visitor info (optional)
-    const visitorInfo = {
-        ip: req.ip || req.connection.remoteAddress,
-        userAgent: req.get('User-Agent'),
-        timestamp: new Date().toISOString(),
-        referrer: req.get('Referrer') || 'Direct'
-    };
-    
-    console.log('📊 New visitor:', visitorInfo);
-    
-    // Serve main page
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
@@ -54,17 +22,7 @@ app.get('/docs', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-
 app.post('/api/collect', (req, res) => {
-    const data = req.body;
-    
-    // Log collected data
-    console.log('📊 Data collected:', {
-        timestamp: new Date().toISOString(),
-        ip: req.ip,
-        dataSize: JSON.stringify(data).length
-    });
-    
     res.json({ 
         success: true, 
         message: 'Data received',
@@ -73,47 +31,88 @@ app.post('/api/collect', (req, res) => {
 });
 
 app.post('/api/track', (req, res) => {
-    const trackingData = req.body;
-    
-    console.log('📍 Tracking data:', trackingData);
-    
     res.json({ success: true });
 });
 
-// Health check endpoint
 app.get('/health', (req, res) => {
     res.json({ 
         status: 'OK', 
-        timestamp: new Date().toISOString(),
         uptime: process.uptime()
     });
 });
 
+// 404 Handler - ngapaain cok
 app.get('*', (req, res) => {
-    console.log('🔍 404 attempt:', req.url);
-    res.redirect('/');
-});
-
-// Error handler
-app.use((err, req, res, next) => {
-    console.error('💥 Server error:', err.stack);
-    res.status(500).redirect('/');
-});
-
-// Start server
-app.listen(PORT, () => {
-    console.log(`
-🚀 Server running on port ${PORT}
-🌐 Access: http://localhost:${PORT}
-🛡️  Security headers: Active
-📊 Logging: Enabled
+    res.status(404).send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>404 - Not Found</title>
+            <style>
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+                body {
+                    font-family: 'Courier New', monospace;
+                    background: #000;
+                    color: #0f0;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    min-height: 100vh;
+                    text-align: center;
+                }
+                .container {
+                    padding: 20px;
+                }
+                h1 {
+                    font-size: 4rem;
+                    margin-bottom: 20px;
+                    animation: glitch 1s infinite;
+                }
+                p {
+                    font-size: 1.5rem;
+                    margin-bottom: 30px;
+                }
+                a {
+                    color: #0f0;
+                    text-decoration: none;
+                    border: 2px solid #0f0;
+                    padding: 10px 20px;
+                    transition: all 0.3s;
+                }
+                a:hover {
+                    background: #0f0;
+                    color: #000;
+                }
+                @keyframes glitch {
+                    0% { text-shadow: 2px 2px #f00, -2px -2px #00f; }
+                    50% { text-shadow: -2px 2px #00f, 2px -2px #f00; }
+                    100% { text-shadow: 2px 2px #f00, -2px -2px #00f; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>404</h1>
+                <p>ngapaain cok 🤨</p>
+                <a href="/">← Balik ke Homepage</a>
+            </div>
+        </body>
+        </html>
     `);
 });
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-    console.log('🛑 Server shutting down...');
-    process.exit(0);
+app.use((err, req, res, next) => {
+    res.status(500).json({ error: 'Server error' });
+});
+
+app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
 });
 
 module.exports = app;
