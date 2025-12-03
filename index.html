@@ -127,25 +127,7 @@
         <p><kbd>Ctrl+G</kbd> Generate | <kbd>Ctrl+S</kbd> Download | <kbd>Ctrl+P</kbd> Toggle Particles</p>
     </div>
 
-    <!-- ✅ HYBRID JS: Local with CDN fallback -->
-    <script>
-        (function() {
-            const localScript = document.createElement('script');
-            localScript.src = '/script.js';
-            
-            localScript.onerror = function() {
-                console.warn('⚠️ Local JS failed, loading from CDN...');
-                const cdnScript = document.createElement('script');
-                cdnScript.src = 'https://cdn.jsdelivr.net/gh/bayuxxd/varlz@main/script.js';
-                document.body.appendChild(cdnScript);
-            };
-            
-            localScript.onload = function() {
-                console.log('✅ Local JS loaded successfully');
-            };
-            
-            document.body.appendChild(localScript);
-        })();
+  <script src="/script.js"></script>
     </script>
 </body>
 </html>
